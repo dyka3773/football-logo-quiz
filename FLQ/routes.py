@@ -10,7 +10,7 @@ bp = Blueprint('main', __name__)
 
 
 @bp.route('/')
-def hello_world():  # put bplication's code here
+def hello_world():
     return 'Hello World!'
 
 
@@ -28,7 +28,7 @@ def create_or_update_teams():
     team_names = []
 
     for team in teams_from_csv:
-        team.save()
+        team.save(merge=True)
         team_names.append(team.team_name)
 
     return f"Teams created or updated:\n{team_names}", 201
