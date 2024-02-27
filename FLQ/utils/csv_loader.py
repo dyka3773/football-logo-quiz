@@ -1,8 +1,15 @@
 import csv
 from typing import List
 import os
+import logging
 
 from models import Team
+
+logger = logging.getLogger(__name__)
+
+LOGO_FOLDER_PATH = os.getenv('LOGO_FOLDER_PATH')
+if not LOGO_FOLDER_PATH:
+    raise Exception("LOGO_FOLDER_PATH environment variable not set")
 
 
 def read_teams_info_from_csv() -> List[Team.Team]:
@@ -21,17 +28,18 @@ def read_teams_info_from_csv() -> List[Team.Team]:
         teams = []
 
         for row in reader:
-            logo_img_path = row['logo_img_path']
-            img_id = get_img_id(logo_img_path)
+            logo_img_path = LOGO_FOLDER_PATH + \
+                row['logo_img_path'] + row['img_id'] + '.png'
             alt_names = row['alt_names'].split(',')
             if alt_names == ['']:
                 alt_names = []
 
             team = Team.create_team(  # This is used to serialize the data from the csv file into a Team object and make sure it is valid
                 team_name=row['team_name'],
-                img_id=img_id,
+                img_id=int(row['img_id']),
                 logo_img_path=logo_img_path,
-                alt_names=alt_names
+                alt_names=alt_names,
+                difficulty=row['difficulty'],
             )
 
             if team:
@@ -49,7 +57,11 @@ def get_img_id(img_path: str) -> int:
     Returns:
         int: The img_id
     """
-    if os.name == 'nt':
-        return int(img_path.split('\\')[-1].split('.')[0])
-    else:
-        return int(img_path.split('/')[-1].split('.')[0])
+    try:
+        if os.name == 'nt':
+            return int(img_path.split('\\')[-1].split('.')[0])
+        else:
+            return int(img_path.split('/')[-1].split('.')[0])
+    except ValueError as e:
+        logger.error(f"Error getting img_id from '{img_path}': \n{e}")
+        raise e
